@@ -1,0 +1,62 @@
+Splunk queiry for OWASP top 10
+
+GPT -> splunk queries
+
+ splunk query to detect owasp top 10 based on Ngnix event log
+
+ 1. SQL Injection:
+
+index=<index_name> source="nginx" (method="GET" OR method="POST") uri="*/*.*" (args="*=*'*" OR args="*=*%27*")
+
+————————————
+
+
+2. Cross-Site Scripting (XSS):
+
+index=<index_name> source="nginx" (method="GET" OR method="POST") uri="*/*.*" (args="*<*" OR args="*>*")
+
+——————————————
+
+3. Broken Authentication and Session Management:
+
+index=<index_name> source="nginx" method="GET" uri="*/login.*"
+
+——————————————
+
+
+4. Broken Access Control:
+
+index=<index_name> source="nginx" method="GET" uri="*/admin/*"
+
+——————————————
+
+5. Cross-Site Request Forgery (CSRF): index=<index_name> source="nginx" (method="GET" OR method="POST") uri="*/*.*" (args="*csrf*" OR args="*CSRF*")
+
+——————————————
+
+6. Security Misconfiguration:
+
+index=<index_name> source="nginx" status=404
+
+—————————————
+
+7. Insecure Cryptographic Storage:
+index=<index_name> source="nginx" (method="GET" OR method="POST") uri="*/*.*" (args="*pass*" OR args="*PASS*")
+
+——————————————
+
+8. Failure to Restrict URL Access: index=<index_name> source="nginx" method="GET" uri="*/private/*"
+
+—————————————
+
+9. Insufficient Logging and Monitoring: index=<index_name> source="nginx" status=5* OR status=4*
+
+—————————————
+
+10. Insufficient Security Controls:
+
+index=<index_name> source="nginx" method="GET" uri="*/setup.*"
+
+————————————————
+
+Note: Replace the <index_name> placeholder with the actual name of your Splunk index that contains the Nginx event logs.
