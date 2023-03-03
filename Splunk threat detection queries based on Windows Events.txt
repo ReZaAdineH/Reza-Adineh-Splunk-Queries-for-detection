@@ -1,0 +1,70 @@
+Splunk threat detection queries based on Windows Events
+
+
+Note: These queries are just examples and may need to be customized based on your environment
+
+
+============================================
+
+
+1. Initial Access:
+* Detect successful login attempts from new or unusual source IPs:
+
+index=winEventLog EventCode=4624 Logon_Type=10 | stats count by src_ip
+
+
+* Detect new user account creation events:
+
+index=winEventLog EventCode=4720 OR EventCode=4722 OR EventCode=4724 OR EventCode=4726 OR EventCode=4738 OR EventCode=4741 OR EventCode=4742 OR EventCode=4781 | stats count by user
+
+
+============================================
+
+2. Privilege Escalation:
+* Detect use of privileged accounts without proper authorization:
+
+index=winEventLog EventCode=4672 NOT ("SeImpersonatePrivilege" OR "SeTcbPrivilege") | stats count by Account_Name
+
+
+* Detect attempts to exploit vulnerabilities for privilege escalation:
+
+index=winEventLog EventCode=4624 "logon type 3" | rex field=Message "(?<process_name>\w+)\.exe" | search process_name="wmiprvse.exe" | stats count
+
+============================================
+
+3. Lateral Movement:
+* Detect successful logins from different hosts with the same username:
+
+index=winEventLog EventCode=4624 Logon_Type=3 | stats count by Account_Name, src_ip
+
+
+* Detect attempts to add new shared folders or change permissions on existing shared folders:
+
+index=winEventLog EventCode=5140 OR EventCode=5142 OR EventCode=5144 OR EventCode=5145 OR EventCode=5146 OR EventCode=5148 OR EventCode=5149 OR EventCode=5379 OR EventCode=5380 OR EventCode=5667 OR EventCode=5668 OR EventCode=5670 OR EventCode=5671 | stats count by Account_Name, Object_Name
+
+============================================
+
+4. Exploitation:
+* Detect attempts to exploit known vulnerabilities:
+
+index=winEventLog EventCode=4624 Logon_Type=3 OR EventCode=4625 OR EventCode=4648 OR EventCode=4768 OR EventCode=4769 OR EventCode=4776 OR EventCode=4778 OR EventCode=4799 | rex field=Message "(?<process_name>\w+)\.exe" | search process_name="powershell.exe" | stats count
+
+
+* Detect attempts to execute malicious scripts or binaries:
+
+index=winEventLog EventCode=1 OR EventCode=5 OR EventCode=7 OR EventCode=8 OR EventCode=9 OR EventCode=10 OR EventCode=11 OR EventCode=12 OR EventCode=13 OR EventCode=14 | search "*\\cmd.exe /c *" OR "*\\powershell.exe -NoProfile -ExecutionPolicy Bypass -Command *" | stats count by ComputerName, EventCode
+
+============================================
+
+5. Execution:
+* Detect attempts to start or stop system services:
+
+index=winEventLog EventCode=7045 OR EventCode=7049 OR EventCode=4662 | rex field=Message "Object Name: (?<service_name>\S+)" | stats count by service_name
+
+* Detect attempts to establish new network connections:
+
+index=winEventLog EventCode=3 OR EventCode=4648 OR EventCode=4768 OR EventCode=4769 OR EventCode=4776 OR EventCode=4778 OR EventCode=4799 | rex field=Message "(?<process_name>\w+)\.exe" | search process_name="svchost.exe" | stats count by ComputerName,
+
+
+
+============================================

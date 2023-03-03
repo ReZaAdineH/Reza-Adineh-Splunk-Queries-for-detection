@@ -1,0 +1,91 @@
+Splunk threat detection query for Linux based on syslog
+
+
+Note: these examples may need to be customized based on the specific environment and use case.
+
+
+
+============================================
+
+
+1. Initial Access:
+* Detect SSH login attempts from new or unusual source IPs:
+
+index=linux_syslog "sshd.*Failed password for" | rex field=_raw "from (?<src_ip>\S+)" | stats count by src_ip
+
+* Detect attempts to create new user accounts:
+
+index=linux_syslog "useradd" OR "adduser" | stats count by user
+
+
+============================================
+
+
+2. Privilege Escalation:
+* Detect use of sudo without proper authorization:
+
+index=linux_syslog "sudo:" NOT ("command not allowed" OR "NOT in sudoers") | stats count by user
+
+
+* Detect attempts to exploit vulnerabilities for privilege escalation:
+
+index=linux_syslog ("CVE" AND ("privilege escalation" OR "root escalation")) OR "sudoedit" OR "su:" | stats count by sourcetype
+
+
+
+============================================
+
+
+3. Lateral Movement:
+Detect SSH login attempts from different hosts with the same username:
+
+index=linux_syslog "sshd.*Accepted" | rex field=_raw "user (?<user>\S+)" | stats count by user, src_ip
+
+
+* Detect suspicious activity with network services, such as running new listening services:
+
+index=linux_syslog ("systemd: Started" AND ("Nginx" OR "Apache" OR "MySQL" OR "PostgreSQL")) | stats count by sourcetype
+
+
+============================================
+
+4. Exploitation:
+* Detect attempts to exploit known vulnerabilities:
+
+index=linux_syslog ("CVE" AND ("remote code execution" OR "arbitrary code execution")) | stats count by sourcetype
+
+
+* Detect attempts to execute malicious scripts or binaries:
+
+index=linux_syslog ("sh:" AND "No such file or directory") OR ("systemd: Failed to start") OR ("systemd: Starting" AND ("wpad.service" OR "dhcpd.service")) | stats count by sourcetype
+
+
+============================================
+
+
+5. Execution
+* Detect attempts to start or stop system services:
+
+index=linux_syslog ("systemd: Starting" OR "systemd: Stopping") AND ("Nginx" OR "Apache" OR "MySQL" OR "PostgreSQL") | stats count by sourcetype
+
+* Detect attempts to establish new network connections:
+
+index=linux_syslog "kernel: [0-9]*\.[0-9]* [0-9]*\.[0-9]* [0-9]*\.[0-9]* [0-9]*\.[0-9]* [0-9]*\.[0-9]* [0-9]*\.[0-9]*" | rex field=_raw "SRC=(?<src_ip>\S+).*DST=(?<dst_ip>\S+)" | stats count by src_ip, dst_ip
+
+============================================
+
+6. Data Exfiltration:
+* Detect attempts to exfiltrate data over the network:
+
+index=linux_syslog ("curl" OR "wget") AND ("GET" OR "POST") | rex field=_raw "(?<protocol>curl|wget).*(?<action>GET|POST)" | stats count by protocol, action
+
+
+* Detect attempts to delete or modify sensitive files:
+
+index=linux_syslog ("rm" OR "mv") AND ("/etc/shadow" OR "/etc/passwd" OR "/root/.ssh/") | stats count by user, action, file
+
+
+
+
+
+

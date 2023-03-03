@@ -1,0 +1,119 @@
+Splunk Queries for web attack detection with Modsecurity & Nginx Logs
+
+
+
+SQL Injection:
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bselect\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\binsert\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bupdate\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bdelete\\b\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Matched \"SQL injection\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Matched \"SQL Injection Attack: SQL Tautology Detected\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Matched \"SQL Injection Attack: Common Injection Testing Detected\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+
+============================================
+
+Local File Inclusion (LFI) Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\betc\\/passwd\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\betc\\/shadow\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\betc\\/group\\b\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+============================================
+
+Command Injection Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bexec\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bsystem\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bpassthru\\b\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Matched \"Command Injection\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Matched \"Command Injection Attack: Unix Command Injection Detected\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Matched \"Command Injection Attack: Windows Command Injection Detected\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+============================================
+
+Cross-Site Request Forgery (CSRF) Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bcsrf_token\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bx-requested-with\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bx-csrf-token\\b\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+============================================
+
+Remote File Inclusion (RFI) Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bhttp:\\/\\/\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bhttps:\\/\\/\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bftp:\\/\\/\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Matched \"Directory Traversal Attack Attempt\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Matched \"Remote File Inclusion (RFI) Attack: Remote File Execution attempt detected\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Matched \"Path Traversal Attack (/../)\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+============================================
+
+Remote Code Execution (RCE) Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\brequest\\.exec\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\brequest\\.system\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\brequest\\.proc_open\\b\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+============================================
+
+
+Server-Side Request Forgery (SSRF) Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bfile:\\/\\/\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\blocalhost\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\b127\\.0\\.0\\.1\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\b0\\.0\\.0\\.0\\b\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+
+============================================
+
+
+Cross-Site Scripting (XSS) Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)<script[ >]\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bonerror=alert\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bwindow\\.location\\b\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg
+
+
+============================================
+
+
+Remote File Download (RFD) Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\b\\.(php|pl|cgi)\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\b\\.\\.\\/\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bhttp(s)?:\\/\\/\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+============================================
+
+XML External Entity (XXE) Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bDOCTYPE\\b\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Pattern match \"(?i)\\bENTITY\\b\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec
+
+
+============================================
+
+Brute-Force Login Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Matched \"Too many Login Attempts from IP\" at REQUEST_HEADERS:User-Agent" OR "ModSecurity: Access denied with code 403 (phase 2). Matched \"Too many Login Attempts from IP\" at ARGS:username" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+============================================
+
+
+Clickjacking Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Matched \"Frame-Options Header Not Set\" at RESPONSE_HEADERS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+============================================
+
+Open Redirect Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access
+
+
+============================================
+
+
+LDAP Injection Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Matched \"LDAP Injection Attack: Query Injection Detected\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Matched \"LDAP Injection Attack: Injection Detected\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+
+============================================
+
+XML External Entity (XXE) Attacks
+
+"ModSecurity: Access denied with code 403 (phase 2). Matched \"XML External Entity (XXE) Attack: Detected use of External Entity via Parameter Expansion\" at ARGS" OR "ModSecurity: Access denied with code 403 (phase 2). Matched \"XML External Entity (XXE) Attack: Potential Blind SSRF with file scheme detected\" at ARGS" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+============================================
+
+Session Hijacking and Session Fixation Attacks
+
+index=nginx_logs sourcetype=access_combined_wcookie "ModSecurity: Access denied with code 403 (phase 2). Matched \"Session Fixation Attack Detected. Session ID not changed\" at REQUEST_COOKIES" OR "ModSecurity: Access denied with code 403 (phase 2). Matched \"Session Fixation Attack Detected via cookie\" at REQUEST_COOKIES" OR "ModSecurity: Access denied with code 403 (phase 2). Matched \"Session Hijacking Attack Detected via cookie\" at REQUEST_COOKIES" | rex field=_raw "ModSecurity: .*\[id \"(?<modsec_id>\d+)\"" | rex field=_raw "ModSecurity: .*\[msg \"(?<modsec_msg>[^\"]+)\"" | stats count by modsec_id, modsec_msg
+
+

@@ -1,0 +1,117 @@
+Splunk threat hunting with Zeek (Bro) Events
+
+
+Note: These queries are just examples and may need to be customized based on your network environment and the specific threats you are looking for. 
+Also, it's important to keep in mind that threat hunting is an iterative process and requires constant refinement of queries and investigation of anomalies.
+
+
+1. Detecting port scans:
+
+tag=bro service=scan
+| stats count by src_ip, dest_ip, service
+
+============================================
+
+2. Detecting brute force attacks:
+
+tag=bro protocol=tcp service=ssh event_type=bro_conn
+| stats count by src_ip
+| where count > 10
+
+============================================
+
+3. Detecting DNS tunneling:
+
+tag=bro dns_proto
+| stats count by query, query_class, query_type
+| where count > 10
+
+============================================
+
+4. Detecting malicious traffic over HTTP:
+
+tag=bro http
+| search uri="/cmd.exe" OR uri="/wp-includes/" OR uri="/wp-content/"
+
+============================================
+
+5. Detecting lateral movement:
+
+tag=bro smb_files
+| stats count by source,dest,file_name
+| where count > 5
+
+============================================
+
+6. Detecting suspicious traffic to known C&C servers:
+
+tag=bro dns_proto
+| search query="*.botnet.com" OR query="*.commandandcontrol.com"
+
+============================================
+
+7. Threat hunting for abnormal user behavior:
+
+tag=bro event_type="weird"
+| stats count by src_ip, dest_ip, conn_state
+
+============================================
+
+8. Detecting network reconnaissance:
+
+tag=bro protocol=icmp event_type=bro_conn
+| stats count by src_ip
+| where count > 10
+
+============================================
+
+9. Detecting brute force attacks on web applications:
+
+tag=bro http event_type=bro_http
+| where uri_path="/login.php" AND status_code=401
+
+============================================
+
+10. Detecting data exfiltration:
+
+tag=bro files event_type=bro_files
+| search mime_type="application/x-rar-compressed" OR mime_type="application/octet-stream" OR mime_type="application/zip"
+
+============================================
+
+11. Detecting lateral movement over SMB:
+
+tag=bro smb_mapping event_type=bro_smb_mapping
+| stats count by source,dest
+| where count > 5
+
+============================================
+
+12. Threat hunting for anomalous process execution:
+
+tag=bro event_type="process_create"
+| stats count by parent_image, image_path
+| where count > 10
+
+============================================
+
+13. Detecting DNS amplification attacks:
+
+tag=bro dns_proto
+| search query="*.root-servers.net" AND answer_type="NS"
+| stats count by id_orig_h, id_resp_h
+| where count > 10
+
+============================================
+
+14. Threat hunting for anomalous network traffic:
+
+tag=bro event_type="weird"
+| stats count by src_ip, dest_ip, conn_state
+| where count > 10
+
+
+
+
+
+
