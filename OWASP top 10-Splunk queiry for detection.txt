@@ -1,6 +1,6 @@
 Splunk queiry for OWASP top 10
 
-GPT -> splunk queries
+Splunk queries
 
  splunk query to detect owasp top 10 based on Ngnix event log
 
